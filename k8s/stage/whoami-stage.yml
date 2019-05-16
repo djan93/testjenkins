@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: whoami-deploy
-  namespace: stage
+  namespace: prod
   labels:
     app: whoami
 spec:
@@ -14,13 +14,13 @@ spec:
     metadata:
       labels:
         app: whoami
-        env: canary
+        env: prod
     spec:
       containers:
       - name: whoami
         image: acrdemo4.azurecr.io/whoami:latest
       imagePullSecrets:
-      - name: secret-stage
+      - name: secret-prod
 ---
 apiVersion: v1
 kind: Service
