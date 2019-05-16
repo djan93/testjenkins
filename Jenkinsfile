@@ -21,10 +21,6 @@ node {
     // Roll out canary to production environment
     case "canary":
         // Change deployed image in canary to the one we just built
-        sh("sudo kubectl --kubeconfig ~jenkins/.kube/config get ns ${appName}-${env.BRANCH_NAME} || sudo kubectl --kubeconfig ~jenkins/.kube/config create ns ${appName}-${env.BRANCH_NAME}")
-        withCredentials([usernamePassword(credentialsId: 'acr_auth', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
-          sh "sudo kubectl --kubeconfig ~jenkins/.kube/config -n ${appName}-${env.BRANCH_NAME} get secret acr-auth || sudo kubectl --kubeconfig ~jenkins/.kube/config --namespace=${appName}-${env.BRANCH_NAME} create secret docker-registry acr-auth --docker-server ${acr} --docker-username $USERNAME --docker-password $PASSWORD"
-        }
         sh("sed -i.bak 's#${appRepo}#${imageTag}#' ./k8s/production/*.yml")
         sh("sudo kubectl --kubeconfig ~daniel/.kube/config --namespace=prod apply -f k8s/production/")
         sh("echo http://`kubectl --namespace=prod get service/${appName} --output=json | jq -r '.status.loadBalancer.ingress[0].ip'` > ${appName}")
@@ -33,10 +29,6 @@ node {
     // Roll out master toproduction
     case "master":
         // Change deployed image in master to the one we just built
-        sh("sudo kubectl --kubeconfig ~jenkins/.kube/config get ns ${appName}-${env.BRANCH_NAME} || sudo kubectl --kubeconfig ~jenkins/.kube/config create ns ${appName}-${env.BRANCH_NAME}")
-        withCredentials([usernamePassword(credentialsId: 'acr_auth', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
-          sh "sudo kubectl --kubeconfig ~jenkins/.kube/config -n ${appName}-${env.BRANCH_NAME} get secret acr-auth || sudo kubectl --kubeconfig ~jenkins/.kube/config --namespace=${appName}-${env.BRANCH_NAME} create secret docker-registry acr-auth --docker-server ${acr} --docker-username $USERNAME --docker-password $PASSWORD"
-        }
         sh("sed -i.bak 's#${appRepo}#${imageTag}#' ./k8s/production/*.yml")
         sh("sudo kubectl --kubeconfig ~daniel/.kube/config --namespace=prod apply -f k8s/production/")
         sh("echo http://`kubectl --namespace=prod get service/${appName} --output=json | jq -r '.status.loadBalancer.ingress[0].ip'` > ${appName}")
@@ -45,10 +37,6 @@ node {
         // Roll out release to stage
     case "release":
         // Change deployed image in master to the one we just built
-        sh("sudo kubectl --kubeconfig ~jenkins/.kube/config get ns ${appName}-${env.BRANCH_NAME} || sudo kubectl --kubeconfig ~jenkins/.kube/config create ns ${appName}-${env.BRANCH_NAME}")
-        withCredentials([usernamePassword(credentialsId: 'acr_auth', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
-          sh "sudo kubectl --kubeconfig ~jenkins/.kube/config -n ${appName}-${env.BRANCH_NAME} get secret acr-auth || sudo kubectl --kubeconfig ~jenkins/.kube/config --namespace=${appName}-${env.BRANCH_NAME} create secret docker-registry acr-auth --docker-server ${acr} --docker-username $USERNAME --docker-password $PASSWORD"
-        }
         sh("sed -i.bak 's#${appRepo}#${imageTag}#' ./k8s/stage/*.yml")
         sh("sudo kubectl --kubeconfig ~daniel/.kube/config --namespace=stage apply -f k8s/stage/")
         sh("echo http://`kubectl --namespace=stage get service/${appName} --output=json | jq -r '.status.loadBalancer.ingress[0].ip'` > ${appName}")
@@ -57,10 +45,6 @@ node {
         // Roll out dev to dev
     case "dev":
         // Change deployed image in master to the one we just built
-        sh("sudo kubectl --kubeconfig ~jenkins/.kube/config get ns ${appName}-${env.BRANCH_NAME} || sudo kubectl --kubeconfig ~jenkins/.kube/config create ns ${appName}-${env.BRANCH_NAME}")
-        withCredentials([usernamePassword(credentialsId: 'acr_auth', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
-          sh "sudo kubectl --kubeconfig ~jenkins/.kube/config -n ${appName}-${env.BRANCH_NAME} get secret acr-auth || sudo kubectl --kubeconfig ~jenkins/.kube/config --namespace=${appName}-${env.BRANCH_NAME} create secret docker-registry acr-auth --docker-server ${acr} --docker-username $USERNAME --docker-password $PASSWORD"
-        }
         sh("sed -i.bak 's#${appRepo}#${imageTag}#' ./k8s/dev/*.yml")
         sh("sudo kubectl --kubeconfig ~daniel/.kube/config --namespace=dev apply -f k8s/dev/")
         sh("echo http://`kubectl --namespace=dev get service/${appName} --output=json | jq -r '.status.loadBalancer.ingress[0].ip'` > ${appName}")
@@ -69,10 +53,10 @@ node {
     // Roll out a dev environment
     default:
         // Create namespace if it doesn't exist
-        sh("sudo kubectl --kubeconfig ~jenkins/.kube/config get ns ${appName}-${env.BRANCH_NAME} || sudo kubectl --kubeconfig ~jenkins/.kube/config create ns ${appName}-${env.BRANCH_NAME}")
+        sh("kubectl get ns ${appName}-${env.BRANCH_NAME} || kubectl create ns ${appName}-${env.BRANCH_NAME}")
         withCredentials([usernamePassword(credentialsId: 'acr_auth', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
-          sh "sudo kubectl --kubeconfig ~jenkins/.kube/config -n ${appName}-${env.BRANCH_NAME} get secret acr-auth || sudo kubectl --kubeconfig ~jenkins/.kube/config --namespace=${appName}-${env.BRANCH_NAME} create secret docker-registry acr-auth --docker-server ${acr} --docker-username $USERNAME --docker-password $PASSWORD"
-        }
+          sh "kubectl -n ${appName}-${env.BRANCH_NAME} get secret mysecret || kubectl --namespace=${appName}-${env.BRANCH_NAME} create secret docker-registry mysecret --docker-server ${acr} --docker-username $USERNAME --docker-password $PASSWORD"
+        }  
         sh("sed -i.bak 's#${appRepo}#${imageTag}#' ./k8s/dev/*.yml")
         sh("kubectl --namespace=${appName}-${env.BRANCH_NAME} apply -f k8s/dev/")
         echo 'To access your environment run `kubectl proxy`'
