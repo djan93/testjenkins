@@ -19,8 +19,6 @@ spec:
       containers:
       - name: whoami
         image: acrdemo4.azurecr.io/whoami:latest
-        ports:
-        - containerPort: 4000
       imagePullSecrets:
       - name: secret-stage
 ---
